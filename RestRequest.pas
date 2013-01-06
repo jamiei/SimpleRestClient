@@ -1,3 +1,11 @@
+{ ------------------------------------------------------------
+SimpleRestRequest - A Simple, fluent interfaced REST client for
+Delphi XE and up.
+
+https://github.com/jamiei/SimpleRestClient
+
+Licensed under the BSD-3 Open source license.
+--------------------------------------------------------------}
 unit RestRequest;
 
 interface
@@ -132,8 +140,8 @@ begin
     except
       on E: EIdHTTPProtocolException do
       begin
-        Result.ResponseCode := 0;
-        Result.ResponseStr := '';
+        Result.ResponseCode := httpClient.ResponseCode;
+        Result.ResponseStr := E.Message;
         raise E;
       end;
     end;
@@ -176,7 +184,7 @@ begin
     except
       on E: EIdHTTPProtocolException do
       begin
-        Result.ResponseCode := E.ErrorCode;
+        Result.ResponseCode := httpClient.ResponseCode;
         Result.ResponseStr := E.Message;
         raise E;
       end;
@@ -253,7 +261,7 @@ begin
     except
       on E: EIdHTTPProtocolException do
       begin
-        Result.ResponseCode := E.ErrorCode;
+        Result.ResponseCode := httpClient.ResponseCode;
         Result.ResponseStr := E.Message;
         raise E;
       end;
@@ -291,7 +299,7 @@ begin
     except
       on E: EIdHTTPProtocolException do
       begin
-        Result.ResponseCode := 0;
+        Result.ResponseCode := httpClient.ResponseCode;
         Result.ResponseStr := '';
         raise E;
       end;
@@ -325,7 +333,7 @@ begin
     except
       on E: EIdHTTPProtocolException do
       begin
-        Result.ResponseCode := 0;
+        Result.ResponseCode := httpClient.ResponseCode;
         Result.ResponseStr := '';
         raise E;
       end;
