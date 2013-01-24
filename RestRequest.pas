@@ -6,6 +6,10 @@ https://github.com/jamiei/SimpleRestClient
 
 Licensed under the BSD-3 Open source license.
 --------------------------------------------------------------}
+///	<summary>
+///	  Contains TRestRequest - The simple, fluent wrapper around Indy's TIdHttp
+///	  to make writing RESTful clients easy.
+///	</summary>
 unit RestRequest;
 
 interface
@@ -24,7 +28,15 @@ uses
     TBeforeRequest = procedure(Sender: TObject; var AHttpClient: TIdHttp) of Object;
 
     THttpResponse = record
+
+      ///	<summary>
+      ///	  The Http Response code returned
+      ///	</summary>
       ResponseCode: integer;
+
+      ///	<summary>
+      ///	  The Body returned or an exception message.
+      ///	</summary>
       ResponseStr: string;
     end;
 
@@ -142,7 +154,6 @@ begin
       begin
         Result.ResponseCode := httpClient.ResponseCode;
         Result.ResponseStr := E.Message;
-        raise E;
       end;
     end;
   finally
@@ -186,7 +197,6 @@ begin
       begin
         Result.ResponseCode := httpClient.ResponseCode;
         Result.ResponseStr := E.Message;
-        raise E;
       end;
     end;
   finally
@@ -263,7 +273,6 @@ begin
       begin
         Result.ResponseCode := httpClient.ResponseCode;
         Result.ResponseStr := E.Message;
-        raise E;
       end;
     end;
   finally
@@ -301,7 +310,6 @@ begin
       begin
         Result.ResponseCode := httpClient.ResponseCode;
         Result.ResponseStr := '';
-        raise E;
       end;
     end;
   finally
@@ -335,7 +343,6 @@ begin
       begin
         Result.ResponseCode := httpClient.ResponseCode;
         Result.ResponseStr := '';
-        raise E;
       end;
     end;
   finally
