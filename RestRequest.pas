@@ -219,10 +219,13 @@ begin
   Result := TIdHttp.Create(nil);
   Result.ConnectTimeout := 5000;
   Result.ReadTimeout := 5000;
-  doBeforeRequest(Result);
+  Result.OnAuthorization := httpAuthorisation;
+  Result.MaxAuthRetries := 0;
   Result.HTTPOptions := [hoInProcessAuth];
+  doBeforeRequest(Result);
   Result.Request.RawHeaders.Clear;
   Result.Request.RawHeaders.AddStrings(Self.FHeaders);
+  Result.Request.BasicAuthentication := true;
   Result.Request.Accept := FAccept;
 end;
 
