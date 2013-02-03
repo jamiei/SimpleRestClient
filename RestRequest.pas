@@ -226,6 +226,8 @@ begin
   Result.Request.RawHeaders.Clear;
   Result.Request.RawHeaders.AddStrings(Self.FHeaders);
   Result.Request.BasicAuthentication := true;
+  Result.Request.Username := Self.FUsername;
+  Result.Request.Password := Self.FPassword;
   Result.Request.Accept := FAccept;
 end;
 
