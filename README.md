@@ -27,7 +27,7 @@ begin
       putParams.Add('due-date=01/01/2013 00:00:00');
       RestReq := TRestRequest.Create().Domain('localhost').Path('todo').WithCredentials('test', 'test');
       RestResp := RestReq.Put(putParams);
-      if RestResp.ResponseCode = 200 then WriteLn('Your todo was added!');
+      if RestResp.ResponseCode = 201 then WriteLn('Your todo was added!');
     finally
       RestReq.Free;
     end;
