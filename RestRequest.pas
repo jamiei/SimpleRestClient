@@ -223,8 +223,8 @@ begin
   Result.MaxAuthRetries := 0;
   Result.HTTPOptions := [hoInProcessAuth];
   doBeforeRequest(Result);
-  Result.Request.RawHeaders.Clear;
-  Result.Request.RawHeaders.AddStrings(Self.FHeaders);
+  Result.Request.CustomHeaders.Clear;
+  Result.Request.CustomHeaders.AddStrings(Self.FHeaders);
   Result.Request.BasicAuthentication := true;
   Result.Request.Username := Self.FUsername;
   Result.Request.Password := Self.FPassword;
