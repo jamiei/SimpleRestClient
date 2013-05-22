@@ -395,7 +395,7 @@ end;
 function TRestRequest.WithHeader(aName, aValue: string): TRestRequest;
 begin
   if Self.FHeaders.Count > 0 then Self.FHeaders.CommaText := Self.FHeaders.CommaText + ',';
-  Self.FHeaders.CommaText := Self.FHeaders.CommaText + aName + '=' + aValue;
+  Self.FHeaders.CommaText := Self.FHeaders.CommaText + aName + ':' + aValue;
   Result := Self;
 end;
 
