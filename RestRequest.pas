@@ -45,23 +45,30 @@ uses
         FDomain: string;
         FPaths: TStringList;
         FParams: TStringList;
+        FFileParams: TStringList;
         FHeaders: TStringList;
         FUsername: string;
         FPassword: string;
         FResponse: THttpResponse;
         FAccept: string;
+        FContentType: string;
         FBeforeRequest: TBeforeRequest;
 
         procedure doBeforeRequest(AHttpInst: TIdHttp);
         function getHttpClientInstance: TIdHttp;
         function getURLAsStr: string;
         function urlEncode(str: string): string;
-        function createMultiPartFormDataStreamFromStringList(strings: TStringList): TIdMultiPartFormDataStream;
+        function doPost(aParams: TIdMultiPartFormDataStream): THttpResponse; overload;
+        function doPost(aParams: TStringStream): THttpResponse; overload;
+        function multipartRequired(aParams, aFileParams: TStringList): boolean;
+        function createMultiPartFormDataStreamFromStringList(strings: TStringList; aFileParams: TStringList): TIdMultiPartFormDataStream;
         function createStringStreamFromStringList(strings: TStringList): TStringStream;
         procedure httpAuthorisation(Sender: TObject; Authentication: TIdAuthentication; var Handled: Boolean);
 
         function getAccept: string;
         procedure setAccept(const Value: string);
+        function getContentType: string;
+        procedure setContentType(const Value: string);
         function GetBeforeRequest: TBeforeRequest;
         procedure SetBeforeRequest(const Value: TBeforeRequest);
       public
@@ -71,12 +78,14 @@ uses
         function Domain(aDomain: string): TRestRequest;
         function Path(aPath: string): TRestRequest;
         function Param(aKey: string; aValue: string): TRestRequest;
+        function FileParam(aKey: string; aValue: string): TRestRequest;
         function WithHeader(aName: string; aValue: string): TRestRequest;
         function WithCredentials(username, password: string): TRestRequest;
 
         property Response: THttpResponse read FResponse;
         property FullUrl: string read getURLAsStr;
         property Accept: string read getAccept write setAccept;
+        property ContentType: string read getContentType write setContentType;
         property BeforeRequest: TBeforeRequest read GetBeforeRequest write SetBeforeRequest;
 
         function Get: THttpResponse;
@@ -97,6 +106,7 @@ begin
   inherited Create;
   Self.FPaths := TStringList.Create;
   Self.FParams := TStringList.Create;
+  Self.FFileParams := TStringList.Create;
   Self.FHeaders := TStringList.Create;
   Self.FAccept := DEFAULT_ACCEPT;
 end;
@@ -106,7 +116,7 @@ begin
   Create(false);
 end;
 
-function TRestRequest.createMultiPartFormDataStreamFromStringList(strings: TStringList): TIdMultiPartFormDataStream;
+function TRestRequest.createMultiPartFormDataStreamFromStringList(strings: TStringList; aFileParams: TStringList): TIdMultiPartFormDataStream;
 var
   i: integer;
   key, value: string;
@@ -117,6 +127,12 @@ begin
     key := strings.Names[i];
     value := strings.ValueFromIndex[i];
     Result.AddFormField(key, value);
+  end;
+  for i := 0 to aFileParams.Count - 1 do
+  begin
+    key := aFileParams.Names[i];
+    value := aFileParams.ValueFromIndex[i];
+    Result.AddFile(key, value);
   end;
 end;
 
@@ -165,6 +181,7 @@ destructor TRestRequest.Destroy;
 begin
   Self.FPaths.Free;
   Self.FParams.Free;
+  Self.FFileParams.Free;
   Self.FHeaders.Free;
   inherited;
 end;
@@ -177,6 +194,61 @@ end;
 function TRestRequest.Domain(aDomain: string): TRestRequest;
 begin
   Self.FDomain := Trim(aDomain);
+  Result := Self;
+end;
+
+function TRestRequest.doPost(
+  aParams: TIdMultiPartFormDataStream): THttpResponse;
+var
+  httpClient: TIdHttp;
+  respStr: string;
+begin
+  httpClient := getHttpClientInstance;
+  try
+    httpClient.OnAuthorization := Self.httpAuthorisation;
+    try
+      respStr := httpClient.Post(getURLAsStr, aParams);
+      Result.ResponseCode := httpClient.ResponseCode;
+      Result.ResponseStr := respStr;
+    except
+      on E: EIdHTTPProtocolException do
+      begin
+        Result.ResponseCode := httpClient.ResponseCode;
+        Result.ResponseStr := '';
+      end;
+    end;
+  finally
+    httpClient.Free;
+  end;
+end;
+
+function TRestRequest.doPost(aParams: TStringStream): THttpResponse;
+var
+  httpClient: TIdHttp;
+  respStr: string;
+begin
+  httpClient := getHttpClientInstance;
+  try
+    httpClient.OnAuthorization := Self.httpAuthorisation;
+    try
+      respStr := httpClient.Post(getURLAsStr, aParams);
+      Result.ResponseCode := httpClient.ResponseCode;
+      Result.ResponseStr := respStr;
+    except
+      on E: EIdHTTPProtocolException do
+      begin
+        Result.ResponseCode := httpClient.ResponseCode;
+        Result.ResponseStr := '';
+      end;
+    end;
+  finally
+    httpClient.Free;
+  end;
+end;
+
+function TRestRequest.FileParam(aKey, aValue: string): TRestRequest;
+begin
+  Self.FFileParams.Add(aKey + '=' + aValue);
   Result := Self;
 end;
 
@@ -214,6 +286,11 @@ begin
   Result := FBeforeRequest;
 end;
 
+function TRestRequest.getContentType: string;
+begin
+  Result := FContentType;
+end;
+
 function TRestRequest.getHttpClientInstance: TIdHttp;
 begin
   Result := TIdHttp.Create(nil);
@@ -229,6 +306,7 @@ begin
   Result.Request.Username := Self.FUsername;
   Result.Request.Password := Self.FPassword;
   Result.Request.Accept := FAccept;
+  Result.Request.ContentType := FContentType;
 end;
 
 function TRestRequest.getURLAsStr: string;
@@ -261,6 +339,16 @@ begin
   Handled := true;
 end;
 
+function TRestRequest.multipartRequired(aParams,
+  aFileParams: TStringList): boolean;
+begin
+  Result := false;
+  if aFileParams.Count > 0 then
+  begin
+    Result := true;
+  end;
+end;
+
 function TRestRequest.Options: THttpResponse;
 var
   httpClient: TIdHttp;
@@ -287,8 +375,7 @@ end;
 
 function TRestRequest.Param(aKey, aValue: string): TRestRequest;
 begin
-  if Self.FParams.Count > 0 then Self.FParams.CommaText := Self.FParams.CommaText + ',';
-  Self.FParams.CommaText := Self.FParams.CommaText + aKey + '=' + aValue;
+  Self.FParams.Add(aKey + '=' + aValue);
   Result := Self;
 end;
 
@@ -300,25 +387,26 @@ end;
 
 function TRestRequest.Post(aParams: TStringList): THttpResponse;
 var
-  httpClient: TIdHttp;
-  respStr: string;
+  aParamStream: TStringStream;
+  aParamMulti: TIdMultiPartFormDataStream;
 begin
-  httpClient := getHttpClientInstance;
-  try
-    httpClient.OnAuthorization := Self.httpAuthorisation;
+  if Self.multipartRequired then
+  begin
+    aParamStream := Self.createStringStreamFromStringList(aParams);
     try
-      respStr := httpClient.Post(getURLAsStr, aParams);
-      Result.ResponseCode := httpClient.ResponseCode;
-      Result.ResponseStr := respStr;
-    except
-      on E: EIdHTTPProtocolException do
-      begin
-        Result.ResponseCode := httpClient.ResponseCode;
-        Result.ResponseStr := '';
-      end;
+      Result := doPost(aParamStream);
+    finally
+      aParamStream.Free;
     end;
-  finally
-    httpClient.Free;
+  end
+  else
+  begin
+    aParamMulti := Self.createMultiPartFormDataStreamFromStringList(aParams, FFileParams);
+    try
+      Result := doPost(aParamMulti);
+    finally
+      aParamMulti.Free;
+    end;
   end;
 end;
 
@@ -334,9 +422,6 @@ begin
     try
       params := createStringStreamFromStringList(aParams);
       try
-        httpClient.Request.Method := 'PUT';
-        httpClient.Request.Source := params;
-        httpClient.Request.ContentType := 'application/x-www-form-urlencoded';
         respStr := httpClient.Put(getURLAsStr, params);
       finally
         params.Free;
@@ -363,6 +448,11 @@ end;
 procedure TRestRequest.SetBeforeRequest(const Value: TBeforeRequest);
 begin
   FBeforeRequest := value;
+end;
+
+procedure TRestRequest.setContentType(const Value: string);
+begin
+  FContentType := Value;
 end;
 
 function TRestRequest.urlEncode(str: string): string;
@@ -394,8 +484,7 @@ end;
 
 function TRestRequest.WithHeader(aName, aValue: string): TRestRequest;
 begin
-  if Self.FHeaders.Count > 0 then Self.FHeaders.CommaText := Self.FHeaders.CommaText + ',';
-  Self.FHeaders.CommaText := Self.FHeaders.CommaText + aName + ':' + aValue;
+  Self.FHeaders.Add(aName + ':' + aValue);
   Result := Self;
 end;
 
