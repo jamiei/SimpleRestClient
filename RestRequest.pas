@@ -207,6 +207,7 @@ begin
   try
     httpClient.OnAuthorization := Self.httpAuthorisation;
     try
+      httpClient.Request.ContentType := 'multipart/form-data';
       respStr := httpClient.Post(getURLAsStr, aParams);
       Result.ResponseCode := httpClient.ResponseCode;
       Result.ResponseStr := respStr;
@@ -231,6 +232,7 @@ begin
   try
     httpClient.OnAuthorization := Self.httpAuthorisation;
     try
+      httpClient.Request.ContentType := 'application/x-www-form-urlencoded';
       respStr := httpClient.Post(getURLAsStr, aParams);
       Result.ResponseCode := httpClient.ResponseCode;
       Result.ResponseStr := respStr;
@@ -421,6 +423,7 @@ begin
     httpClient.OnAuthorization := Self.httpAuthorisation;
     try
       params := createStringStreamFromStringList(aParams);
+      httpClient.Request.ContentType := 'application/x-www-form-urlencoded';
       try
         respStr := httpClient.Put(getURLAsStr, params);
       finally
