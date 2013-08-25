@@ -392,7 +392,7 @@ var
   aParamStream: TStringStream;
   aParamMulti: TIdMultiPartFormDataStream;
 begin
-  if Self.multipartRequired(aParams, FFileParams) then
+  if not Self.multipartRequired(aParams, FFileParams) then
   begin
     aParamStream := Self.createStringStreamFromStringList(aParams);
     try
