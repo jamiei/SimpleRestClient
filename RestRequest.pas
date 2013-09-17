@@ -42,6 +42,7 @@ uses
 
     TRestRequest = class(TObject)
       private
+        FScheme: string;
         FDomain: string;
         FPaths: TStringList;
         FParams: TStringList;
@@ -75,6 +76,7 @@ uses
         constructor Create(aIsSSL: boolean); overload;
         constructor Create; overload;
         destructor Destroy; override;
+        function Scheme(aScheme: string): TRestRequest;
         function Domain(aDomain: string): TRestRequest;
         function Path(aPath: string): TRestRequest;
         function Param(aKey: string; aValue: string): TRestRequest;
@@ -102,6 +104,7 @@ implementation
 constructor TRestRequest.Create(aIsSSL: boolean);
 const
   DEFAULT_ACCEPT = 'application/json, application/xml';
+  DEFAULT_SCHEME = 'http';
 begin
   inherited Create;
   Self.FPaths := TStringList.Create;
@@ -109,6 +112,7 @@ begin
   Self.FFileParams := TStringList.Create;
   Self.FHeaders := TStringList.Create;
   Self.FAccept := DEFAULT_ACCEPT;
+  Self.FScheme := DEFAULT_SCHEME;
 end;
 
 constructor TRestRequest.Create;
@@ -330,7 +334,7 @@ begin
       aFullParams := aFullParams + Self.FParams.Names[i] + '=' + Self.FParams.ValueFromIndex[i];
     end;
   end;
-  Result := 'http://' + FDomain + aFullPath + aFullParams;
+  Result := FScheme + '://' + FDomain + aFullPath + aFullParams;
 end;
 
 procedure TRestRequest.httpAuthorisation(Sender: TObject;
@@ -456,6 +460,12 @@ end;
 procedure TRestRequest.setContentType(const Value: string);
 begin
   FContentType := Value;
+end;
+
+function TRestRequest.Scheme(aScheme: string): TRestRequest;
+begin
+  Self.FScheme := Trim(aScheme);
+  Result := Self;
 end;
 
 function TRestRequest.urlEncode(str: string): string;
