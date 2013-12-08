@@ -21,7 +21,9 @@ uses
   IdHttp,
   IdAuthentication,
   IdMultipartFormData,
-  IdURI;
+  IdURI,
+  IdSSL,
+  IdSSLOpenSSL;
 
 
   type
@@ -54,6 +56,7 @@ uses
         FAccept: string;
         FContentType: string;
         FBeforeRequest: TBeforeRequest;
+        FSslHandler: TIdSSLIOHandlerSocketOpenSSL;
 
         procedure doBeforeRequest(AHttpInst: TIdHttp);
         function getHttpClientInstance: TIdHttp;
@@ -65,6 +68,7 @@ uses
         function createMultiPartFormDataStreamFromStringList(strings: TStringList; aFileParams: TStringList): TIdMultiPartFormDataStream;
         function createStringStreamFromStringList(strings: TStringList): TStringStream;
         procedure httpAuthorisation(Sender: TObject; Authentication: TIdAuthentication; var Handled: Boolean);
+        function createSSLHandlerIfRequired(scheme: string; var httpClient: TIdHttp): boolean;
 
         function getAccept: string;
         procedure setAccept(const Value: string);
@@ -140,6 +144,12 @@ begin
   end;
 end;
 
+function TRestRequest.createSSLHandlerIfRequired(scheme: string; var httpClient: TIdHttp): boolean;
+begin
+  if scheme = 'https' then Self.FSslHandler := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
+  if Assigned(Self.FSslHandler) then httpClient.IOHandler := FSslHandler;
+end;
+
 function TRestRequest.createStringStreamFromStringList(
   strings: TStringList): TStringStream;
 var
@@ -187,6 +197,8 @@ begin
   Self.FParams.Free;
   Self.FFileParams.Free;
   Self.FHeaders.Free;
+  if Assigned(FSslHandler) then FSslHandler.Free;
+
   inherited;
 end;
 
@@ -305,6 +317,8 @@ begin
   Result.OnAuthorization := httpAuthorisation;
   Result.MaxAuthRetries := 0;
   Result.HTTPOptions := [hoInProcessAuth];
+  // Create an SSL Handler if we need to.
+  createSSLHandlerIfRequired(Self.FScheme, Result);
   doBeforeRequest(Result);
   Result.Request.CustomHeaders.Clear;
   Result.Request.CustomHeaders.AddStrings(Self.FHeaders);
