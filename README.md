@@ -1,5 +1,5 @@
 ## Overview
-SimpleRestClient is a very simple, fluent wrapper around the Indy IdHttp client to make it easy to write RESTful clients.
+SimpleRestClient is a very simple, fluent wrapper around the Indy IdHttp client to make it easy to write RESTful clients. This client was built in Delphi XE2, but might well work in later versions.
 
 ## Usage
 This very simple console application creates a RESTful PUT request to add a fictional todo.
@@ -45,7 +45,7 @@ SimpleRestClient was thrown together pretty quickly to fill a need that I had an
 * Accept headers - I'd like a better solution (read: more Delphi like) to Accept headers.
 
 ## Licensing
-Copyright (c) 2013, Jamie Ingilby
+Copyright (c) 2015, Jamie Ingilby
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:

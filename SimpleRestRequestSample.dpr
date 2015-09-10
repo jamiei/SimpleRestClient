@@ -11,16 +11,14 @@ uses
 
 var RestReq: TRestRequest;
     RestResp: THttpResponse;
-    putParams: TStringList;
 begin
   try
+    RestReq := nil;
     try
-      putParams := TStringList.Create();
-      putParams.Add('title=Buy milk');
-      putParams.Add('due-date=01/01/2013 00:00:00');
-      RestReq := TRestRequest.Create().Domain('localhost').Path('todo').WithCredentials('test', 'test');
-      RestResp := RestReq.Put(putParams);
-      if RestResp.ResponseCode = 200 then WriteLn('Your todo was added!');
+      RestReq := TRestRequest.Create().Domain('jsonplaceholder.typicode.com').Path('todos').Path('1');
+      RestResp := RestReq.Get();
+      if RestResp.ResponseCode = 200 then WriteLn('Your todo was added!') else WriteLn('Failed to add your todo.');
+      WriteLn(RestResp.ResponseStr);
     finally
       RestReq.Free;
     end;
